@@ -10,12 +10,20 @@ import spray.json._
 
 case class Site( id: Int, domain: String )
 case class Geo( country: Option[String], city: Option[String], lat: Option[Double], lon: Option[Double] )
-case class Impression( id: String, wmin: Option[Int], wmax: Option[Int], w: Option[Int],
-  hmin: Option[Int], hmax: Option[Int], h: Option[Int], bidFloor: Option[Double]
+case class Impression( id: String, bidFloor: Option[Double],
+  wmin: Option[Int], wmax: Option[Int], w: Option[Int],
+  hmin: Option[Int], hmax: Option[Int], h: Option[Int]
 )
-case class User(id: String, geo: Option[Geo])
-case class Device(id: String, geo: Option[Geo])
-case class BidRequest(id: String, impression: Option[List[Impression]], site: Site, user: Option[User], device: Option[Device])
+case class User( id: String, geo: Option[Geo] )
+case class Device( id: String, geo: Option[Geo] )
+case class BidRequest( id: String, impression: Option[List[Impression]], site: Site, user: Option[User], device: Option[Device] )
+case class TimeRange( timeStart: Long, timeEnd: Long )
+case class Targeting( cities: List[String], targetedSiteIds: List[Int] )
+case class Banner( id: Int, src: String, width: Int, height: Int)
+case class Campaign( id: Int, userId: Int, country: String, bid: Double,
+  runningTimes: Set[TimeRange], targeting: Targeting, banners: List[Banner]
+)
+case class BidResponse( id: String, bidRequestId: String, price: Double, adid: Option[String], banner: Option[Banner])
 
 trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val siteFormat = jsonFormat2(Site)
@@ -24,12 +32,21 @@ trait JsonSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val userFormat = jsonFormat2(User)
   implicit val deviceFormat = jsonFormat2(Device)
   implicit val bidRequestFormat = jsonFormat5(BidRequest)
+  implicit val timeRangeFormat = jsonFormat2(TimeRange)
+  implicit val targetingFormat = jsonFormat2(Targeting)
+  implicit val bannerFormat = jsonFormat4(Banner)
+  implicit val campaignFormat = jsonFormat7(Campaign)
+  implicit val bidResponseFormat = jsonFormat5(BidResponse)
 }
 
 object Server extends App with JsonSupport {
   implicit val system = ActorSystem("actor-system")
   implicit val materializer: ActorMaterializer = ActorMaterializer()
   implicit val ec = system.dispatcher
+
+  //val campaigns: List[Campaign] = List(
+    //Campaign()  
+  //)
 
   val routes = 
     path("") { 
