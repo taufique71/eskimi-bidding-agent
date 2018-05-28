@@ -91,15 +91,28 @@ object Server extends App with JsonSupport {
           var bidResponse: Option[BidResponse] = None
           for(campaign <- campaignPool){
             if(campaign.targeting.targetedSiteIds(bidRequest.site.id)){
-              val impressions = bidRequest.imp match {
-                case Some(x) => x
-                case None => None
-              }
-              if(impressions != None){
-                //println(impressions)
-                //for(i <- impressions){
-                  //println(i)
-                //}
+              if(bidRequest.imp.isDefined){
+                val impressions = bidRequest.imp.get
+                for(imp <- impressions){
+                  for(banner <- campaign.banners){
+                    val wmin = imp.wmin.getOrElse(0)
+                    val wmax = imp.wmax.getOrElse(1000) // Assuming that wmax can be 1000 units 
+                    val hmin = imp.hmin.getOrElse(0)
+                    val hmax = imp.hmax.getOrElse(1000) // Assuming that hmax can be 1000 units 
+                    
+                    var flag = true
+                    
+                    if(imp.w.isDefined && imp.w.get != banner.width) flag = false
+                    else if(imp.h.isDefined && imp.h.get != banner.height) flag = false
+                    else if(banner.width > wmax) flag = false
+                    else if(banner.width < wmin) flag = false
+                    else if(banner.height > hmax) flag = false
+                    else if(banner.height < hmin) flag = false
+                    if(flag){
+                      bidResponse = Some(BidResponse(r.nextInt(1000), bidRequest.id, campaign.bid, None, Some(banner)))
+                    }
+                  }
+                }
               }
               else{
                 bidResponse = Some(BidResponse(r.nextInt(1000), bidRequest.id, campaign.bid, None, None))
